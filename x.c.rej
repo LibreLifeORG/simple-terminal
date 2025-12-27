@@ -1,23 +1,54 @@
-@@ -1153,19 +1174,15 @@
- 		| ButtonMotionMask | ButtonPressMask | ButtonReleaseMask;
- 	xw.attrs.colormap = xw.cmap;
- 
--	if (!(opt_embed && (parent = strtol(opt_embed, NULL, 0))))
--		parent = XRootWindow(xw.dpy, xw.scr);
- 	xw.win = XCreateWindow(xw.dpy, parent, xw.l, xw.t,
--			win.w, win.h, 0, XDefaultDepth(xw.dpy, xw.scr), InputOutput,
-+			win.w, win.h, 0, xw.depth, InputOutput,
- 			xw.vis, CWBackPixel | CWBorderPixel | CWBitGravity
- 			| CWEventMask | CWColormap, &xw.attrs);
- 
- 	memset(&gcvalues, 0, sizeof(gcvalues));
- 	gcvalues.graphics_exposures = False;
--	dc.gc = XCreateGC(xw.dpy, parent, GCGraphicsExposures,
--			&gcvalues);
--	xw.buf = XCreatePixmap(xw.dpy, xw.win, win.w, win.h,
--			DefaultDepth(xw.dpy, xw.scr));
-+	xw.buf = XCreatePixmap(xw.dpy, xw.win, win.w, win.h, xw.depth);
-+	dc.gc = XCreateGC(xw.dpy, xw.buf, GCGraphicsExposures, &gcvalues);
- 	XSetForeground(xw.dpy, dc.gc, dc.col[defaultbg].pixel);
- 	XFillRectangle(xw.dpy, xw.buf, dc.gc, 0, 0, win.w, win.h);
- 
+@@ -1562,29 +1563,44 @@
+ 	/* draw the new one */
+ 	if (IS_SET(MODE_FOCUSED)) {
+ 		switch (win.cursor) {
+-		case 7: /* st extension */
+-			g.u = 0x2603; /* snowman (U+2603) */
++		default:
++		case 0: /* blinking block */
++		case 1: /* blinking block (default) */
++			if (IS_SET(MODE_BLINK))
++				break;
+ 			/* FALLTHROUGH */
+-		case 0: /* Blinking Block */
+-		case 1: /* Blinking Block (Default) */
+-		case 2: /* Steady Block */
++		case 2: /* steady block */
+ 			xdrawglyph(g, cx, cy);
+ 			break;
+-		case 3: /* Blinking Underline */
+-		case 4: /* Steady Underline */
++		case 3: /* blinking underline */
++			if (IS_SET(MODE_BLINK))
++				break;
++			/* FALLTHROUGH */
++		case 4: /* steady underline */
+ 			XftDrawRect(xw.draw, &drawcol,
+ 					borderpx + cx * win.cw,
+ 					borderpx + (cy + 1) * win.ch - \
+ 						cursorthickness,
+ 					win.cw, cursorthickness);
+ 			break;
+-		case 5: /* Blinking bar */
+-		case 6: /* Steady bar */
++		case 5: /* blinking bar */
++			if (IS_SET(MODE_BLINK))
++				break;
++			/* FALLTHROUGH */
++		case 6: /* steady bar */
+ 			XftDrawRect(xw.draw, &drawcol,
+ 					borderpx + cx * win.cw,
+ 					borderpx + cy * win.ch,
+ 					cursorthickness, win.ch);
+ 			break;
++		case 7: /* blinking st cursor */
++			if (IS_SET(MODE_BLINK))
++				break;
++			/* FALLTHROUGH */
++		case 8: /* steady st cursor */
++			g.u = stcursor;
++			xdrawglyph(g, cx, cy);
++			break;
+ 		}
+ 	} else {
+ 		XftDrawRect(xw.draw, &drawcol,
