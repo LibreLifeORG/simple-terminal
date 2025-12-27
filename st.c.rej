@@ -1,0 +1,9 @@
+@@ -2651,6 +2737,8 @@
+ 			continue;
+ 
+ 		term.dirty[y] = 0;
++		unhighlighturlsline(y);
++		highlighturlsline(y);
+ 		xdrawline(term.line[y], x1, y, x2);
+ 	}
+ }
